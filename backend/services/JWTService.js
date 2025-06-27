@@ -4,26 +4,28 @@ const RefreshToken = require('../models/token');
 
 class JWTService{
     // Sign Access token
+
+    // it is payment means Data (payload) to include in the token (e.g., user ID and email)
     static signAccessToken(payment, expiryTime ){
-        return jwt.sign(payment, ACCESS_TOKEN_SECRET , {expiresIn: expiryTime});
+        return JWT.sign(payment, ACCESS_TOKEN_SECRET , {expiresIn: expiryTime});
     }
     // Sign Refresh token
     static signRefreshToken(payment, expiryTime){
-        return jwt.sign(payment, REFRESH_TOKEN_SECRET , {expiresIn: expiryTime});
+        return JWT.sign(payment, REFRESH_TOKEN_SECRET , {expiresIn: expiryTime});
     } 
     // verify access token
      static verifyAccessToken(token){
-        return jwt.verify(token, ACCESS_TOKEN_SECRET);
+        return JWT.verify(token, ACCESS_TOKEN_SECRET);
     }
 
     // verify refresh token
     static verifyRefreshToken(token){
-        return jwt.verify(token, REFRESH_TOKEN_SECRET);
+        return JWT.verify(token, REFRESH_TOKEN_SECRET);
     }
     // store refresh token
     static async storeRefreshToken(token, userId){
         try{
-            const newToken = new refreshTokenSchema({
+            const newToken = new RefreshToken({
                 token: token,
                 userId: userId
             })
