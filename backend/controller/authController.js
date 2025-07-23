@@ -67,7 +67,7 @@ const authController = {
         })
         user = await userToRegister.save();
         // token generation
-        accessToken = JWTService.signAccessToken({_id: user._id, username: user.username}, '30m');
+        accessToken = JWTService.signAccessToken({_id: user._id}, '30m');
         refreshToken = JWTService.signRefreshToken({_id: user._id}, '60m');
         }
         catch(error){
@@ -139,7 +139,7 @@ const authController = {
             return next(error);
         }
         
-        let accessToken = JWTService.signAccessToken({_id: user._id ,  username: user.username}, '30m');
+        let accessToken = JWTService.signAccessToken({_id: user._id}, '30m');
         let refreshToken = JWTService.signRefreshToken({_id: user._id}, '60m');
 
         // update refresh token in db
@@ -166,7 +166,88 @@ const authController = {
 
         const userDto = new UserDTO(user);
         // 4. return response
-        return res.status(200).json({user : userDto});
+        return res.status(200).json({user : userDto , auth: true});
+    },
+    async logout(req, res, next){
+        console.log(req);
+        // 1. delete refresh token from db
+        const {refreshToken} =  req.cookies;
+        try{
+            await RefreshToken.deleteOne({token: refreshToken});
+        }
+        catch(error){
+            return next(error);
+        }
+
+        // delete cookies
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+
+        // 2. send response
+        res.status(200).json({ user: null,  auth: false});
+        
+    },
+
+
+    async refresh(req, res, next){
+        // 1. get refresh token from cookie
+        const originalRefreshToken = req.cookies.refreshToken;
+
+        let id;
+        try{
+            id = JWTService.verifyRefreshToken(originalRefreshToken)._id;
+            // humney issey JWTService.verifyRefreshToken(originalRefreshToken) apna refreshtoken verify karwaya matlab hamey ek object mila phir humney ._id likha takay hum us response kay object may say id extract karsakein
+        }
+        catch(e){
+            const error = {
+                status : 401,
+                message : 'Unauthorized'
+            }
+            return next(error);
+        }
+        
+
+         // 2. verify refresh token
+        try{
+            const match = RefreshToken.find({_id: id, token: originalRefreshToken});
+            if (!match){
+                const error = {
+                    status : 401,
+                    message : 'Unauthorized'
+                }
+                return next(error);
+            }
+        }
+        catch(e){
+            return next(e);
+        }
+
+        // 3. generate new token
+        try{
+            const accessToken = JWTService.signAccessToken({_id: id}, '30m');
+            const refreshToken = JWTService.signRefreshToken({_id: id}, '60m');
+            await RefreshToken.updateOne({ _id: id}, {token: refreshToken});
+            res.cookie('accessToken', accessToken , {
+                maxAge: 1000 * 60 * 60 * 24,
+                httpOnly: true
+            });
+            res.cookie('refreshToken', refreshToken , {
+                maxAge: 1000 * 60 * 60 * 24,
+                httpOnly: true
+            })
+
+        }
+        catch(e){
+            return(next)
+        }
+
+        // 4. update db and return response 
+        const user = await User.findOne({_id: id});
+        const userDto = new UserDTO(user);
+        return res.status(200).json({user: userDto, auth: true});
+
+
     }
+
 }
 module.exports = authController;

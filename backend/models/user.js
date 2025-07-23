@@ -10,3 +10,4 @@ const userSchema = new Schema({
 );
 
 module.exports = mongoose.model('User', userSchema , 'users');
+                        //  Model Name, Schema Name, database ki collection ka naam jo baneyga

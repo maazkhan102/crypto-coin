@@ -9,19 +9,26 @@ class JWTService{
     static signAccessToken(payment, expiryTime ){
         return JWT.sign(payment, ACCESS_TOKEN_SECRET , {expiresIn: expiryTime});
     }
+
+    
     // Sign Refresh token
     static signRefreshToken(payment, expiryTime){
         return JWT.sign(payment, REFRESH_TOKEN_SECRET , {expiresIn: expiryTime});
     } 
+
+
     // verify access token
      static verifyAccessToken(token){
         return JWT.verify(token, ACCESS_TOKEN_SECRET);
     }
 
+
     // verify refresh token
     static verifyRefreshToken(token){
         return JWT.verify(token, REFRESH_TOKEN_SECRET);
     }
+
+
     // store refresh token
     static async storeRefreshToken(token, userId){
         try{
