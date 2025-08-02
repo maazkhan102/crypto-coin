@@ -14,6 +14,7 @@ app.use(express.json());
 app.use(router);
 dbConnect();
 
+// this is for serving static files
 app.use('/storage', express.static('storage'));
  
 app.use(errorHandler);
